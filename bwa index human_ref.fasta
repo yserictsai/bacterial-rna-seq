@@ -1,0 +1,27 @@
+bwa index human_ref.fasta
+
+
+bwa mem -t 4 human_ref.fasta sample_S1_L001_R1_001.fastq sample_S1_L001_R2_001.fastq > sample.sam
+
+
+
+
+bowtie2-build -f ../all.cdna MSU7
+
+
+bowtie2 -N 1 -L 20 --score-min L,-.7,-.7 --mp 5,2 -X 400 --no-mixed --no-discordant --fr -M -x MSU7 -q --phred64 -1 ../Raw_reads/Replicate2/Rep2_APO-C_1.fq  -2 ../Raw_reads/Replicate2/Rep2_APO-C_2.fq > rep2_apo_c.sam &
+
+samtools view -bT human_ref.fasta sample.sam > sample.bam
+
+
+samtools sort sample.bam -o sample_sorted.bam
+
+samtools view sample_sorted.bam | more
+
+samtools index sample_sorted.bam
+
+
+samtools mpileup -g -f human_ref.fasta sample_sorted.bam > sample.bcf
+
+
+bcftools call -v -m -O z -o sample.vcf.gz sample.bcf
